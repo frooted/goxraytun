@@ -2,33 +2,56 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/goxray/core/network/route"
 	"github.com/goxray/tun/pkg/client"
 )
 
 var cmdArgsErr = `ERROR: no config_link provided
-usage: %s <config_url>
+usage: %s [--tun-name name] [--tun-ip ip] [--no-routes] <config_url>
   - config_url - xray connection link, like "vless://example..."
   - or set GOXRAY_CONFIG_URL env var
 `
 
 func main() {
+	tunIpStr := flag.String("tun-ip", "192.18.0.1", "TUN interface IP")
+	tunName := flag.String("tun-name", "", "TUN interface name")
+	noRoutes := flag.Bool("no-routes", false, "do not add routes")
+	flag.Parse()
+
 	// Get connection link from first cmd argument or env var.
 	var clientLink string
-	if len(os.Args[1:]) > 0 {
-		clientLink = os.Args[1]
+	args := flag.Args()
+	if len(args) > 1 {
+		fmt.Printf(cmdArgsErr, os.Args[0])
+		os.Exit(1)
+	}
+	if len(args) == 1 {
+		clientLink = args[0]
 	} else {
 		clientLink = os.Getenv("GOXRAY_CONFIG_URL")
 	}
 	if clientLink == "" {
 		fmt.Printf(cmdArgsErr, os.Args[0])
-		os.Exit(0)
+		os.Exit(1)
+	}
+
+	tunIp := net.ParseIP(*tunIpStr)
+	if tunIp == nil {
+		_, _ = fmt.Fprint(os.Stderr, "Invalid TUN IP format\n")
+		os.Exit(1)
+	}
+	tunAddress := &net.IPNet{
+		IP:   tunIp,
+		Mask: net.CIDRMask(32, 32),
 	}
 
 	sigterm := make(chan os.Signal, 1)
@@ -38,9 +61,17 @@ func main() {
 		Level: slog.LevelError,
 	}))
 
+	var routesToTUN []*route.Addr
+	if *noRoutes {
+		routesToTUN = []*route.Addr{}
+	}
+
 	vpn, err := client.NewClientWithOpts(client.Config{
 		TLSAllowInsecure: false,
 		Logger:           logger,
+		TUNAddress:       tunAddress,
+		TUNName:          *tunName,
+		RoutesToTUN:      routesToTUN,
 	})
 	if err != nil {
 		log.Fatal(err)

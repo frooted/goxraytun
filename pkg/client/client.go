@@ -58,6 +58,8 @@ type Config struct {
 	InboundProxy *Proxy
 	// TUN device address (default: 192.18.0.1).
 	TUNAddress *net.IPNet
+	// TUN device name.
+	TUNName string
 	// List of routes to be pointed to TUN device (default: DefaultRoutesToTUN).
 	//
 	// One exception is explicitly added for XRay remote server IP and can not be altered.
@@ -79,6 +81,9 @@ func (c *Config) apply(new *Config) {
 	}
 	if new.TUNAddress != nil {
 		c.TUNAddress = new.TUNAddress
+	}
+	if new.TUNName != "" {
+		c.TUNName = new.TUNName
 	}
 	if new.Logger != nil {
 		c.Logger = new.Logger
@@ -361,7 +366,7 @@ func xRayLogLevel(h slog.Handler) xcommlog.Severity {
 
 // setupTunnel creates new TUN interface in the system and routes all traffic to it.
 func (c *Client) setupTunnel() (*tun.Interface, error) {
-	ifc, err := tun.New("", 1500)
+	ifc, err := tun.New(c.cfg.TUNName, 1500)
 	if err != nil {
 		return nil, fmt.Errorf("create tun: %w", err)
 	}
