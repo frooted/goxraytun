@@ -15,15 +15,21 @@ import (
 var cmdArgsErr = `ERROR: no config_link provided
 usage: %s <config_url>
   - config_url - xray connection link, like "vless://example..."
+  - or set GOXRAY_CONFIG_URL env var
 `
 
 func main() {
-	// Get connection link from first cmd argument
-	if len(os.Args[1:]) != 1 {
+	// Get connection link from first cmd argument or env var.
+	var clientLink string
+	if len(os.Args[1:]) > 0 {
+		clientLink = os.Args[1]
+	} else {
+		clientLink = os.Getenv("GOXRAY_CONFIG_URL")
+	}
+	if clientLink == "" {
 		fmt.Printf(cmdArgsErr, os.Args[0])
 		os.Exit(0)
 	}
-	clientLink := os.Args[1]
 
 	sigterm := make(chan os.Signal, 1)
 	signal.Notify(sigterm, os.Interrupt, syscall.SIGTERM)
