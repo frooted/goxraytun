@@ -18,8 +18,8 @@ import (
 	"github.com/goxray/core/pipe2socks"
 	"github.com/jackpal/gateway"
 
-	xrayproto "github.com/lilendian0x00/xray-knife/v3/pkg/protocol"
-	"github.com/lilendian0x00/xray-knife/v3/pkg/xray"
+	xrayproto "github.com/frooted/xray-knife/v9/pkg/core/protocol"
+	"github.com/frooted/xray-knife/v9/pkg/core/xray"
 	xapplog "github.com/xtls/xray-core/app/log"
 	xcommlog "github.com/xtls/xray-core/common/log"
 )
@@ -332,7 +332,7 @@ func (c *Client) createXrayProxy(link string) (xrayproto.Instance, *xrayproto.Ge
 
 	cfg := protocol.ConvertToGeneralConfig()
 
-	inst, err := svc.MakeInstance(protocol)
+	inst, err := svc.MakeInstance(context.Background(), protocol)
 	if err != nil {
 		return nil, nil, fmt.Errorf("make instance: %w", err)
 	}

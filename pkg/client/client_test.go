@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
+	xkp "github.com/frooted/xray-knife/v9/pkg/core/protocol"
 	"github.com/goxray/core/network/route"
-	xkp "github.com/lilendian0x00/xray-knife/v3/pkg/protocol"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
 
@@ -142,6 +142,7 @@ func newTestClient(xInst runnable, tun io.ReadWriteCloser, routes ipTable, pipe 
 	expGateway := &net.IP{127, 0, 0, 2}
 	expProxy := &Proxy{IP: net.IP{127, 0, 0, 1}, Port: 10234}
 	expGeneralConfig := &xkp.GeneralConfig{Address: "127.0.0.3"}
+	expServerIP := &net.IPAddr{IP: net.IP{127, 0, 0, 3}}
 
 	cl := &Client{
 		cfg: Config{
@@ -155,7 +156,7 @@ func newTestClient(xInst runnable, tun io.ReadWriteCloser, routes ipTable, pipe 
 		routes:        routes,
 		pipe:          pipe,
 		xCfg:          expGeneralConfig,
-		xSrvIP:        &net.IPAddr{IP: net.ParseIP("127.0.0.3")},
+		xSrvIP:        expServerIP,
 	}
 	if stopTunnel != nil {
 		cl.stopTunnel = func() {
